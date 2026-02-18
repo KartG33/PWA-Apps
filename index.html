@@ -219,32 +219,14 @@ function loadXLSX() {
   });
 }
 
-// ── IndexedDB ─────────────────────────────────────────────────────
-const DB_NAME = 'PaymentsDB', DB_STORE = 'kv', DB_KEY = 'payments-v1';
-let _db = null;
+// ── Storage: localStorage + IndexedDB fallback ────────────────────
+const LS_KEY = 'payments-v1';
 
-function openDB() {
-  return new Promise((res, rej) => {
-    if (_db) { res(_db); return; }
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore(DB_STORE);
-    req.onsuccess = e => { _db = e.target.result; res(_db); };
-    req.onerror = () => rej(req.error);
-  });
+function lsSave(data) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(data)); return true; } catch(e) { return false; }
 }
-function idbGet(key) {
-  return openDB().then(db => new Promise((res, rej) => {
-    const req = db.transaction(DB_STORE, 'readonly').objectStore(DB_STORE).get(key);
-    req.onsuccess = () => res(req.result);
-    req.onerror = () => rej(req.error);
-  }));
-}
-function idbSet(key, val) {
-  return openDB().then(db => new Promise((res, rej) => {
-    const req = db.transaction(DB_STORE, 'readwrite').objectStore(DB_STORE).put(val, key);
-    req.onsuccess = () => res(true);
-    req.onerror = () => rej(req.error);
-  }));
+function lsLoad() {
+  try { const v = localStorage.getItem(LS_KEY); return v ? JSON.parse(v) : null; } catch(e) { return null; }
 }
 
 // ── SEED ──────────────────────────────────────────────────────────
@@ -285,4 +267,184 @@ const SEED = [
   {id:'i66',date:'2026-01-01',service:'BETKING.COM.UA',amount:500,filename:'receipt_8HX4-73K8-64ET-49TK.pdf'},
   {id:'i65',date:'2026-01-01',service:'Visual Studio Code',amount:2999,filename:'receipt_843K-XB7T-8BB1-8KEA.pdf'},
   {id:'i64',date:'2026-01-01',service:'Володимир З.',amount:600,filename:'receipt_XTC0-749E-CH21-E46H.pdf'},
-  {id:'i63',date:'2026-01-01',service:'Google LLC Gemini',amount:1589,filename:'receipt_843K-XB7
+  {id:'i63',date:'2026-01-01',service:'Google LLC Gemini',amount:1589,filename:'receipt_843K-XB7T-8BB1-8KAC.pdf'},
+  {id:'i62',date:'2025-12-27',service:'Google*Suno',amount:499,filename:'Державний_сервс_2.pdf'},
+  {id:'i61',date:'2025-12-27',service:'Google*Payment',amount:337,filename:'Державний_сервс.pdf'},
+  {id:'i60',date:'2025-12-26',service:'Jet Brains (Smart Bots)',amount:2199,filename:'receipt_8BCM-5E01-BK1E-P4K7.pdf'},
+  {id:'i59',date:'2025-12-26',service:'Figma Web',amount:2999,filename:'receipt_8BCM-5E01-BK1E-P4K8.pdf'},
+  {id:'i58',date:'2025-12-25',service:'XeAI Perplexity',amount:1339,filename:'receipt_8BCM-5E01-BK1E-P4E9.pdf'},
+  {id:'i57',date:'2025-12-22',service:'Firebase AI (Google LLC)',amount:1499,filename:'receipt_8BCM-5E01-BK1E-P4L2.pdf'},
+  {id:'i56',date:'2025-12-19',service:'Jet Brains',amount:2255,filename:'Квитанція BIS24_16_12_2025.pdf'},
+  {id:'i55',date:'2025-12-19',service:'Open AI',amount:1490,filename:'Квитанція BIS24_16_12_2025.pdf'},
+  {id:'i54',date:'2025-12-16',service:'Google Workspace',amount:290,filename:'Квитанція BIS24_16_12_2025.pdf'},
+  {id:'i53',date:'2025-12-16',service:'Mistral',amount:1390,filename:'Квитанція BIS24_16_12_2025.pdf'},
+  {id:'i52',date:'2025-12-16',service:'Commet AI',amount:1690,filename:'Квитанція BIS24_16_12_2025.pdf'},
+  {id:'i51',date:'2025-12-15',service:'Hugging Face',amount:1700,filename:'Квитанція BIS24_15_12_2025.pdf'},
+  {id:'i50',date:'2025-12-15',service:'Cursor IDE',amount:1900,filename:'Квитанція BIS24_15_12_2025.pdf'},
+  {id:'i49',date:'2025-12-14',service:'Google',amount:1420,filename:'Квитанція BIS24_13_12_2025.pdf'},
+  {id:'i48',date:'2025-12-14',service:'Jet Brains',amount:1475,filename:'Квитанція BIS24_14_12_2025.pdf'},
+  {id:'i47',date:'2025-12-14',service:'Sonnet Claude',amount:1230,filename:'Квитанція BIS24_13_12_2025.pdf'},
+  {id:'i46',date:'2025-12-12',service:'Anthropic',amount:1200,filename:'Квитанція BIS24_12_12_2025.pdf'},
+  {id:'i45',date:'2025-12-10',service:'AI Images',amount:1150,filename:'Квитанція BIS24_10_12_2025.pdf'},
+  {id:'i44',date:'2025-12-09',service:'Adobe',amount:1899,filename:'Квитанція BIS24_09_12_2025.pdf'},
+  {id:'i43',date:'2025-12-06',service:'Cusror AI',amount:2150,filename:'receipt_97XP-8807-66A8-T5PK.pdf'},
+  {id:'i42',date:'2025-12-05',service:'Microsoft AzureNet',amount:1100,filename:'receipt_PAMB-88X7-7T8B-M191.pdf'},
+  {id:'i41',date:'2025-12-03',service:'Github Copilot',amount:1790,filename:'receipt_4CP3-A2P2-89X5-THXT.pdf'},
+  {id:'i40',date:'2025-12-02',service:'Google LLC',amount:470,filename:'Квитанція BIS24_29_11_2025.pdf'},
+  {id:'i39',date:'2025-12-02',service:'GOOGLE *Suno',amount:450,filename:'receipt_EB5E-8TCE-46MH-36T2.pdf'},
+  {id:'i38',date:'2025-12-02',service:'GOOGLE *GitHub',amount:1790,filename:'receipt_EB5E-8TCE-46MH-36T6.pdf'},
+  {id:'i37',date:'2025-12-01',service:'Visual Studio AI',amount:2999,filename:'Квитанція BIS24_29_11_2025.pdf'},
+  {id:'i36',date:'2025-12-01',service:'Gemini',amount:989,filename:'Квитанція BIS24_29_11_2025.pdf'},
+  {id:'i35',date:'2025-11-30',service:'ChatGpt Plus',amount:1899,filename:'Квитанція BIS24_29_11_2025.pdf'},
+  {id:'i34',date:'2025-11-30',service:'Figma',amount:2999,filename:'Квитанція BIS24_29_11_2025.pdf'},
+  {id:'i33',date:'2025-11-29',service:'Syncthing LLC',amount:314,filename:'Квитанція BIS24_29_11_2025.pdf'},
+  {id:'i32',date:'2025-11-27',service:'Jet Brains LLC',amount:535,filename:'Квитанція BIS24_25_11_2025.pdf'},
+  {id:'i31',date:'2025-11-27',service:'Jet Brains PyCharm',amount:1989,filename:'Квитанція BIS24_25_11_2025.pdf'},
+  {id:'i30',date:'2025-11-26',service:'XeAI Perplexity',amount:1555,filename:'Квитанція BIS24_25_11_2025.pdf'},
+  {id:'i29',date:'2025-11-25',service:'JetBrains SCO',amount:1679,filename:'Квитанція BIS24_25_11_2025.pdf'},
+  {id:'i28',date:'2025-11-25',service:'Open AI Sora',amount:859,filename:'Квитанція BIS24_25_11_2025.pdf'},
+  {id:'i27',date:'2025-11-23',service:'Antrophic LLC',amount:899,filename:'Квитанція BIS24_25_11_2025.pdf'},
+  {id:'i26',date:'2025-11-23',service:'CompService',amount:1999,filename:'Квитанція BIS24_25_11_2025.pdf'},
+  {id:'i25',date:'2025-11-22',service:'Open AI LLC',amount:2065,filename:'Квитанція BIS24_19_11_2025.pdf'},
+  {id:'i24',date:'2025-11-22',service:'Firebase AI Studio',amount:1599,filename:'Квитанція BIS24_23_11_2025.pdf'},
+  {id:'i23',date:'2025-11-19',service:'Obsidian Vaults',amount:595,filename:'Квитанція BIS24_19_11_2025.pdf'},
+  {id:'i22',date:'2025-11-19',service:'Google Cloud Platform Payments',amount:1402,filename:'Квитанція BIS24_19_11_2025.pdf'},
+  {id:'i21',date:'2025-11-19',service:'Drive Sync',amount:350,filename:'Квитанція BIS24_19_11_2025.pdf'},
+  {id:'i20',date:'2025-11-17',service:'Cursor AI',amount:2114,filename:'Квитанція BIS24_15_11_2025.pdf'},
+  {id:'i19',date:'2025-11-17',service:'ChatGpt Plus',amount:1900,filename:'Квитанція BIS24_15_11_2025.pdf'},
+  {id:'i18',date:'2025-11-15',service:'Bis24 Payments Uah',amount:387,filename:'Квитанція BIS24_15_11_2025.pdf'},
+  {id:'i17',date:'2025-11-15',service:'Google Workspace',amount:412,filename:'Квитанція BIS24_15_11_2025.pdf'},
+  {id:'i16',date:'2025-11-13',service:'Music Tools Suno',amount:999,filename:'Квитанція BIS24_13_11_2025.pdf'},
+  {id:'i15',date:'2025-11-13',service:'Sonnet Claude',amount:2099,filename:'Квитанція BIS24_13_11_2025.pdf'},
+  {id:'i14',date:'2025-11-12',service:'JB Android Studio',amount:2899,filename:'Квитанція BIS24_29_09_2025.pdf'},
+  {id:'i13',date:'2025-11-06',service:'Microsoft AzureNet',amount:1126,filename:'receipt_TKAA-2C54-3B1K-AKH3.pdf'},
+  {id:'i12',date:'2025-11-05',service:'Firebase AI Developer Studio',amount:1750,filename:'receipt_KHBA-K9M5-6H19-A625.pdf'},
+  {id:'i11',date:'2025-11-05',service:'Visual Studio AI Code',amount:3200,filename:'receipt_KHBA-K9M5-6H19-A624.pdf'},
+  {id:'i10',date:'2025-11-03',service:'PicsArt',amount:250,filename:'receipt_X6MP-MC3E-X6M7-8E47.pdf'},
+  {id:'i9',date:'2025-11-03',service:'Canva Pty Ltd.',amount:920,filename:'receipt_X6MP-MC3E-X6M7-8E48.pdf'},
+  {id:'i8',date:'2025-11-02',service:'Visual Studio Code AI',amount:3142,filename:'receipt_MB39-B389-4983-6PAA.pdf'},
+  {id:'i7',date:'2025-10-31',service:'Google One (Gemini Pro)',amount:988,filename:'Квитанція BIS24_31_10_2025.pdf'},
+  {id:'i6',date:'2025-10-30',service:'Figma Make Enterprise',amount:2999,filename:'receipt_0XHP-M50A-B9C7-N1L4.pdf'},
+  {id:'i5',date:'2025-10-29',service:'Open AI Codex CLI',amount:1369,filename:'Квитанція BIS24_29_09_2025.pdf'},
+  {id:'i4',date:'2025-10-26',service:'Jet Brains PyCharm',amount:3100,filename:'BIS24_29_09_2025_24_23_84.pdf'},
+  {id:'i3',date:'2025-10-23',service:'Jet Brains Web Development Tools',amount:2147,filename:'Квитанція BIS24_25_09_2025.pdf'},
+  {id:'i2',date:'2025-10-10',service:'JB Android Studio',amount:2899,filename:'receipt_BIS24_29_09_2025_36_83.pdf'},
+  {id:'i1',date:'2025-10-05',service:'Open AI',amount:2700,filename:'receipt_BIS24_29_09_2025_24_22_34.pdf'},
+];
+
+// ── State ─────────────────────────────────────────────────────────
+let P = [], selFile = '', mode = 'list', curMonth = new Date().toISOString().slice(0, 7);
+document.getElementById('fD').value = new Date().toISOString().split('T')[0];
+
+// ── Load / Save ───────────────────────────────────────────────────
+async function loadData() {
+  const saved = lsLoad();
+  P = (saved && Array.isArray(saved) && saved.length > 0) ? saved : [...SEED];
+  if (!saved || !saved.length) lsSave(P);
+  render();
+}
+
+async function persistData() {
+  const ok = lsSave(P);
+  showToast(ok ? '✓ Сохранено' : '⚠ Ошибка', !ok);
+}
+
+let _tt;
+function showToast(msg, err) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = err ? 'rgba(239,68,68,.15)' : 'rgba(16,185,129,.15)';
+  t.style.borderColor = err ? 'rgba(239,68,68,.4)' : 'rgba(16,185,129,.4)';
+  t.style.color = err ? '#ef4444' : '#10b981';
+  t.classList.add('on');
+  clearTimeout(_tt);
+  _tt = setTimeout(() => t.classList.remove('on'), 2000);
+}
+
+// ── Icons / Helpers ───────────────────────────────────────────────
+const IC=[
+  [['openai','chatgpt','gpt','codex','sora'],'🤖'],
+  [['claude','anthropic','sonnet'],'🟠'],
+  [['gemini'],'🔵'],[['firebase'],'🔥'],[['google'],'🔵'],
+  [['github','copilot'],'⚫'],[['cursor'],'✏️'],
+  [['jetbrain','jb android','pycharm','jet bran'],'🧠'],
+  [['figma'],'🎨'],[['adobe'],'🅰️'],[['azure','microsoft'],'🪟'],
+  [['suno','music'],'🎵'],[['canva'],'🖼️'],[['picsart','ai image'],'📸'],
+  [['mistral','perplexity','xeai'],'💡'],[['android studio'],'📱'],
+  [['visual studio','vscode'],'💻'],[['hugging'],'🤗'],
+  [['obsidian'],'💎'],[['syncthing','drive sync'],'🔄'],[['betking'],'🎲'],
+];
+function ico(s){const l=(s||'').toLowerCase();for(const[k,v]of IC)if(k.some(x=>l.includes(x)))return v;return'💳';}
+const MO=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const MS=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+function fa(n){return Number(n).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fd(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${parseInt(day)} ${MS[parseInt(m)-1]} ${y}`;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function hl(t,q){if(!q)return esc(t);return esc(t).replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>');}
+function keywords(n){const stop=new Set(['ai','llc','inc','ltd','pty','web','app','dev','pro','plus','tools','studio','code','edit','view','payments','uah','com','ua','net','services','platform','development','products','databases','google']);return n.toLowerCase().replace(/[^a-zа-яіїє0-9\s]/gi,' ').split(/\s+/).filter(w=>w.length>=3&&!stop.has(w));}
+function findSimilar(p){const kw=keywords(p.service);if(!kw.length)return[];return P.filter(x=>{if(x.id===p.id)return false;const xk=keywords(x.service);return kw.some(k=>xk.some(xk=>xk.includes(k)||k.includes(xk)));}).sort((a,b)=>b.date.localeCompare(a.date));}
+
+const SVG_EDIT=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const SVG_DEL=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>`;
+const SVG_CLIP=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>`;
+
+function cardHTML(p,q){return`<div class="card-main" onclick="toggleCard(this)"><div class="c-ico">${ico(p.service)}</div><div class="c-body"><div class="c-top"><div class="c-name">${hl(p.service,q)}</div><div class="c-amt">₴ ${fa(p.amount)}</div></div><div class="c-bot"><span class="c-date">${fd(p.date)}</span>${p.filename?`<span>${SVG_CLIP}</span>`:''}</div></div></div><div class="card-panel">${p.filename?`<div class="panel-filename">${SVG_CLIP} ${esc(p.filename)}</div>`:`<div class="panel-no-file">Квитанция не прикреплена</div>`}<div class="panel-actions"><button class="pact-btn" data-id="${p.id}" onclick="startEdit(this)">${SVG_EDIT} Ред.</button><button class="pact-btn sim" data-id="${p.id}" onclick="toggleSim(this)">🔍 Похожие</button><button class="pact-btn del" data-id="${p.id}" onclick="delEntry(this)">${SVG_DEL} Удалить</button></div><div class="similar-list" id="sim_${p.id}"><div class="sim-hdr">Похожие <b></b></div><div class="sim-rows"></div></div></div>`;}
+
+function filteredRows(){let r=[...P].sort((a,b)=>b.date.localeCompare(a.date));const q=document.getElementById('si').value.trim().toLowerCase();if(mode==='month')r=r.filter(x=>x.date.startsWith(curMonth));if(q)r=r.filter(x=>x.service.toLowerCase().includes(q)||x.date.includes(q)||fd(x.date).toLowerCase().includes(q)||(x.filename||'').toLowerCase().includes(q));return r;}
+
+function render(){const el=document.getElementById('list'),emp=document.getElementById('emp');[...el.querySelectorAll('.card,.grp-card')].forEach(c=>c.remove());mode==='group'?renderGroup(el,emp):renderFlat(el,emp);}
+function renderFlat(el,emp){const q=document.getElementById('si').value.trim().toLowerCase(),rows=filteredRows();if(!rows.length){emp.classList.add('on');return;}emp.classList.remove('on');const f=document.createDocumentFragment();rows.forEach(p=>{const d=document.createElement('div');d.className='card';d.dataset.id=p.id;d.innerHTML=cardHTML(p,q);f.appendChild(d);});el.insertBefore(f,emp);}
+function renderGroup(el,emp){const q=document.getElementById('si').value.trim().toLowerCase();let rows=[...P].sort((a,b)=>b.date.localeCompare(a.date));if(q)rows=rows.filter(r=>r.service.toLowerCase().includes(q)||(r.filename||'').toLowerCase().includes(q));const map=new Map();rows.forEach(r=>{if(!map.has(r.service))map.set(r.service,[]);map.get(r.service).push(r);});const groups=[...map.entries()].sort((a,b)=>b[1][0].date.localeCompare(a[1][0].date));if(!groups.length){emp.classList.add('on');return;}emp.classList.remove('on');const f=document.createDocumentFragment();groups.forEach(([name,items])=>{const gc=document.createElement('div');gc.className='grp-card';gc.innerHTML=`<div class="grp-hdr" onclick="this.closest('.grp-card').classList.toggle('open')"><div class="c-ico">${ico(name)}</div><div class="c-body"><div class="c-name">${hl(name,q)}</div></div><span class="grp-count">${items.length}×</span><svg class="grp-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg></div><div class="grp-body">${items.map(it=>`<div class="grp-row"><div class="grp-row-left"><div class="grp-row-date">${fd(it.date)}</div>${it.filename?`<div class="grp-row-file">${SVG_CLIP} ${esc(it.filename)}</div>`:''}</div><div class="grp-row-amt">₴ ${fa(it.amount)}</div><button class="pact-btn" data-id="${it.id}" onclick="startEdit(this)" style="flex:none;padding:6px 8px;margin-left:6px">${SVG_EDIT}</button></div>`).join('')}</div>`;f.appendChild(gc);});el.insertBefore(f,emp);}
+
+function toggleCard(m){const c=m.closest('.card'),was=c.classList.contains('expanded');document.querySelectorAll('.card.expanded').forEach(x=>{x.classList.remove('expanded');x.querySelectorAll('.similar-list').forEach(s=>s.classList.remove('on'));});if(!was)c.classList.add('expanded');}
+function toggleSim(btn){const id=btn.dataset.id,p=P.find(x=>x.id===id);if(!p)return;const el=document.getElementById('sim_'+id);if(el.classList.contains('on')){el.classList.remove('on');return;}const sim=findSimilar(p);el.querySelector('.sim-hdr b').textContent=`(${sim.length})`;el.querySelector('.sim-rows').innerHTML=!sim.length?`<div class="sim-none">Похожих не найдено</div>`:sim.map(s=>`<div class="sim-row"><div class="sim-ico">${ico(s.service)}</div><div class="sim-body"><div class="sim-name">${esc(s.service)}</div><div class="sim-date">${fd(s.date)}</div></div><div class="sim-amt">₴ ${fa(s.amount)}</div></div>`).join('');el.classList.add('on');}
+
+function delEntry(btn){const id=btn.dataset.id,card=btn.closest('.card');card.classList.add('rm');setTimeout(async()=>{P=P.filter(x=>x.id!==id);await persistData();render();},230);}
+
+function setMode(m,el){mode=m;document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('on'));el.classList.add('on');const nav=document.getElementById('monthNav');nav.classList.toggle('on',m==='month');if(m==='month')updateMonthLbl();render();}
+function shiftMonth(d){const[y,m]=curMonth.split('-').map(Number),dt=new Date(y,m-1+d,1);curMonth=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;updateMonthLbl();render();}
+function updateMonthLbl(){const[y,m]=curMonth.split('-');document.getElementById('monthLbl').textContent=`${MO[parseInt(m)-1]} ${y}`;}
+
+document.getElementById('si').addEventListener('input',function(){document.getElementById('sx').classList.toggle('on',!!this.value.trim());render();});
+function clrS(){document.getElementById('si').value='';document.getElementById('sx').classList.remove('on');render();}
+
+let shOpen=false;
+function toggleSh(){shOpen?closeSh():openSh(false);}
+function openSh(isEdit){shOpen=true;document.getElementById('sh').classList.add('on');document.getElementById('ovl').classList.add('on');document.getElementById('fab').classList.add('open');document.getElementById('shTitle').textContent=isEdit?'Редактировать':'Новый платёж';if(!isEdit)setTimeout(()=>document.getElementById('fS').focus(),340);}
+function closeSh(){shOpen=false;['sh','ovl','fab'].forEach(id=>document.getElementById(id).classList.remove('on'));document.getElementById('editId').value='';document.getElementById('fS').value='';document.getElementById('fA').value='';document.getElementById('fD').value=new Date().toISOString().split('T')[0];document.getElementById('ff').value='';document.getElementById('ufn').textContent='';document.getElementById('uz').classList.remove('has');selFile='';}
+function startEdit(btn){const p=P.find(x=>x.id===btn.dataset.id);if(!p)return;document.getElementById('editId').value=p.id;document.getElementById('fS').value=p.service;document.getElementById('fA').value=p.amount;document.getElementById('fD').value=p.date;if(p.filename){document.getElementById('ufn').textContent=p.filename;document.getElementById('uz').classList.add('has');selFile=p.filename;}openSh(true);}
+function onF(inp){const f=inp.files[0];if(!f)return;selFile=f.name;document.getElementById('ufn').textContent=f.name;document.getElementById('uz').classList.add('has');}
+
+async function saveEntry(){
+  const svc=document.getElementById('fS').value.trim(),amt=document.getElementById('fA').value,dt=document.getElementById('fD').value,eid=document.getElementById('editId').value;
+  if(!svc){shake('fS');return;}if(!amt||isNaN(amt)||Number(amt)<=0){shake('fA');return;}if(!dt){shake('fD');return;}
+  if(eid){const i=P.findIndex(x=>x.id===eid);if(i>-1)P[i]={...P[i],service:svc,amount:parseFloat(amt),date:dt,filename:selFile||P[i].filename};}
+  else P.unshift({id:'n'+Date.now().toString(36),service:svc,amount:parseFloat(amt),date:dt,filename:selFile||''});
+  await persistData();
+  closeSh();render();
+}
+function shake(id){const el=document.getElementById(id);el.style.borderColor='var(--red)';el.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:250});setTimeout(()=>el.style.borderColor='',800);el.focus();}
+
+function importX(inp){const f=inp.files[0];if(!f)return;document.getElementById('xfn').textContent='Загрузка…';loadXLSX().then(()=>{const r=new FileReader();r.onload=async e=>{try{const wb=XLSX.read(e.target.result,{type:'array',cellDates:true}),ws=wb.Sheets[wb.SheetNames[0]],rows=XLSX.utils.sheet_to_json(ws,{header:1});let n=0;rows.slice(1).forEach(row=>{let d=row[0],ds='';if(d instanceof Date)ds=d.toISOString().split('T')[0];else if(typeof d==='string')ds=d.trim();else if(typeof d==='number'){const dt=new Date(Math.round((d-25569)*86400*1000));ds=dt.toISOString().split('T')[0];}if(!ds)return;const svc=String(row[1]||'').trim();if(!svc)return;const amt=parseFloat(String(row[2]||'0').replace(',','.'));const fn=String(row[3]||'').trim();if(!P.some(x=>x.date===ds&&x.service===svc&&Number(x.amount)===amt)){P.push({id:'x'+Date.now().toString(36)+Math.random().toString(36).slice(2),date:ds,service:svc,amount:amt,filename:fn});n++;}});await persistData();document.getElementById('xfn').textContent=`✓ Добавлено ${n}`;document.getElementById('xz').classList.add('has');closeSh();render();}catch(e){document.getElementById('xfn').textContent='Ошибка файла';}};r.readAsArrayBuffer(f);}).catch(()=>{document.getElementById('xfn').textContent='Нет сети';});}
+
+function exportXlsx(){loadXLSX().then(()=>{const rows=filteredRows(),data=[['Дата','Сервис','Сумма','Имя файла'],...rows.map(r=>[r.date,r.service,r.amount,r.filename||''])],ws=XLSX.utils.aoa_to_sheet(data);ws['!cols']=[{wch:12},{wch:36},{wch:12},{wch:42}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'payments');XLSX.writeFile(wb,`Payments${mode==='month'?'_'+curMonth:''}.xlsx`);}).catch(()=>alert('Нет сети'));}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&shOpen)closeSh();});
+// ── DEBUG панель ──────────────────────────────────────────────────
+const dbg = document.createElement('div');
+dbg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#1a0000;color:#ff8;font:11px monospace;padding:6px 10px;z-index:9999;white-space:pre-wrap;max-height:40vh;overflow-y:auto;';
+document.body.appendChild(dbg);
+function log(msg) { dbg.textContent += msg + '\n'; console.log(msg); }
+
+window.onerror = (msg, src, line) => { log('❌ JS ERROR: ' + msg + ' (line ' + line + ')'); };
+
+log('▶ script start');
+log('localStorage: ' + (typeof localStorage));
+log('fab el: ' + (document.getElementById('fab') ? 'found' : 'NOT FOUND'));
+
+document.getElementById('fab').addEventListener('click', () => log('FAB clicked!'));
+
+loadData().then(() => log('✓ loadData done, P.length=' + P.length)).catch(e => log('❌ loadData threw: ' + e));
+</script>
+</body>
+</html>
