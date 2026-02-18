@@ -9,12 +9,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Payments">
 <title>Payments</title>
-
-<link rel="manifest" href="./manifest.json">
-
-<!-- Apple touch icon -->
-<link rel="apple-touch-icon" href="data:image/jpeg;base64,/9j/4QCARXhpZgAATU0AKgAAAAgABAEAAAQAAAABAAAEAAEBAAQAAAABAAAEAAEyAAIAAAAUAAAAPodpAAQAAAABAAAAUgAAAAAyMDI2OjAyOjE4IDA0OjMwOjMwAAABkAMAAgAAABQAAABkAAAAADIwMjY6MDI6MTggMDQ6Mjk6NDAA">
-
 <style>
 :root {
   --bg:#0b0c1e;--bg2:#0f1028;--bg3:#131430;--card:#0e1030;--cardh:#131540;
@@ -24,15 +18,6 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--sans);}
-
-/* INSTALL BANNER */
-.inst-banner{display:none;align-items:center;gap:10px;background:rgba(79,70,229,.15);border:1px solid rgba(79,70,229,.4);border-radius:14px;padding:11px 13px;margin:10px 13px 0;}
-.inst-banner.on{display:flex;}
-.inst-ico{font-size:22px;flex-shrink:0;}
-.inst-txt{flex:1;font-size:12px;color:var(--txt2);line-height:1.4;}
-.inst-txt b{color:var(--txt);display:block;font-size:13px;margin-bottom:2px;}
-.inst-btn{background:var(--acc);border:none;border-radius:10px;padding:8px 13px;color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
-.inst-x{background:none;border:none;color:var(--txt3);font-size:18px;cursor:pointer;padding:2px 4px;flex-shrink:0;}
 
 .hdr{position:sticky;top:0;z-index:50;background:rgba(11,12,30,.97);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);padding:13px 15px 11px;}
 .hdr-row1{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
@@ -107,6 +92,10 @@ mark{background:rgba(79,70,229,.35);color:var(--acc2);border-radius:3px;padding:
 .empty-t{font-size:15px;color:var(--txt2);margin:14px 0 5px;}
 .empty-s{font-family:var(--mono);font-size:12px;}
 
+/* Saving indicator */
+.save-toast{position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#10b981;font-family:var(--mono);font-size:12px;padding:7px 14px;border-radius:20px;z-index:999;opacity:0;pointer-events:none;transition:all .3s;}
+.save-toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+
 .export-btn{position:fixed;bottom:26px;left:18px;z-index:100;height:40px;padding:0 14px;border-radius:20px;background:var(--bg3);border:1px solid var(--border);color:var(--txt2);font-family:var(--mono);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;}
 .fab{position:fixed;bottom:24px;right:18px;z-index:100;width:54px;height:54px;border-radius:50%;background:var(--acc);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 22px rgba(79,70,229,.55);transition:transform .2s;}
 .fab:active{transform:scale(.94);}
@@ -141,13 +130,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4);cursor:poi
 </head>
 <body>
 
-<!-- Install Banner -->
-<div class="inst-banner" id="instBanner">
-  <div class="inst-ico">📲</div>
-  <div class="inst-txt"><b>Установить приложение</b>Добавь на главный экран для быстрого доступа</div>
-  <button class="inst-btn" id="instBtn" onclick="installApp()">Установить</button>
-  <button class="inst-x" onclick="document.getElementById('instBanner').classList.remove('on')">✕</button>
-</div>
+<div class="save-toast" id="toast">✓ Сохранено</div>
 
 <header class="hdr">
   <div class="hdr-row1">
@@ -217,44 +200,19 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4);cursor:poi
 </div>
 
 <script>
-// Lazy-load XLSX only when needed
+// ── XLSX lazy load ────────────────────────────────────────────────
 let _xlsxLoaded = false;
 function loadXLSX(){
   return new Promise((res,rej)=>{
     if(_xlsxLoaded){res();return;}
     const s=document.createElement('script');
     s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    s.onload=()=>{_xlsxLoaded=true;res();};
-    s.onerror=rej;
+    s.onload=()=>{_xlsxLoaded=true;res();};s.onerror=rej;
     document.head.appendChild(s);
   });
 }
-</script>
-<script>
-// ── Service Worker ──────────────────────────────────────
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('./sw.js').catch(()=>{});
-}
 
-// ── Install prompt ───────────────────────────────────────────────
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  document.getElementById('instBanner').classList.add('on');
-});
-window.addEventListener('appinstalled', () => {
-  document.getElementById('instBanner').classList.remove('on');
-  deferredPrompt = null;
-});
-function installApp(){
-  if(deferredPrompt){
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(()=>{deferredPrompt=null;});
-  }
-}
-
-// ── Data ─────────────────────────────────────────────────────────
+// ── SEED (начальные данные — загружаются только если хранилище пустое) ──
 const SEED=[
   {id:'i99',date:'2026-02-17',service:'Google Workspace',amount:850,filename:'receipt_BM6A-46X2-E8XX-HK3L.pdf'},
   {id:'i98',date:'2026-02-16',service:'AzureNet Databases',amount:2699,filename:'receipt_XXKH-A02M-2PEK-UL52.pdf'},
@@ -357,10 +315,49 @@ const SEED=[
   {id:'i1',date:'2025-10-05',service:'Open AI',amount:2700,filename:'receipt_BIS24_29_09_2025_24_22_34.pdf'},
 ];
 
-let P=[...SEED];
-let selFile='',mode='list',curMonth=new Date().toISOString().slice(0,7);
-document.getElementById('fD').value=new Date().toISOString().split('T')[0];
+// ── State ─────────────────────────────────────────────────────────
+let P = [];
+let selFile='', mode='list', curMonth=new Date().toISOString().slice(0,7);
+document.getElementById('fD').value = new Date().toISOString().split('T')[0];
 
+// ── Storage helpers ───────────────────────────────────────────────
+const STORE_KEY = 'payments-data-v1';
+
+async function loadData() {
+  try {
+    const res = await window.storage.get(STORE_KEY);
+    if (res && res.value) {
+      P = JSON.parse(res.value);
+    } else {
+      // Первый запуск — заполняем SEED и сохраняем
+      P = [...SEED];
+      await persistData();
+    }
+  } catch(e) {
+    // Хранилище недоступно — работаем с SEED в памяти
+    P = [...SEED];
+  }
+  render();
+}
+
+async function persistData() {
+  try {
+    await window.storage.set(STORE_KEY, JSON.stringify(P));
+    showToast();
+  } catch(e) {
+    console.warn('Storage unavailable', e);
+  }
+}
+
+let toastTimer;
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 1800);
+}
+
+// ── Icons / Helpers ───────────────────────────────────────────────
 const IC=[
   [['openai','chatgpt','gpt','codex','sora'],'🤖'],
   [['claude','anthropic','sonnet'],'🟠'],
@@ -379,7 +376,6 @@ const MS=['янв','фев','мар','апр','май','июн','июл','авг
 function fa(n){return Number(n).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fd(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${parseInt(day)} ${MS[parseInt(m)-1]} ${y}`;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function persist(){try{localStorage.setItem('pv8',JSON.stringify(P));}catch(e){}}
 function hl(text,q){if(!q)return esc(text);const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return esc(text).replace(re,'<mark>$1</mark>');}
 function keywords(name){const stop=new Set(['ai','llc','inc','ltd','pty','the','and','for','web','app','dev','pro','plus','tools','studio','code','edit','view','smart','bots','payments','uah','com','ua','net','services','platform','development','products','databases','google']);return name.toLowerCase().replace(/[^a-zа-яіїє0-9\s]/gi,' ').split(/\s+/).filter(w=>w.length>=3&&!stop.has(w));}
 function findSimilar(p){const kw=keywords(p.service);if(!kw.length)return[];return P.filter(x=>{if(x.id===p.id)return false;const xkw=keywords(x.service);return kw.some(k=>xkw.some(xk=>xk.includes(k)||k.includes(xk)));}).sort((a,b)=>b.date.localeCompare(a.date));}
@@ -398,29 +394,52 @@ function renderGroup(el,emp){const q=document.getElementById('si').value.trim().
 
 function toggleCard(m){const card=m.closest('.card');const was=card.classList.contains('expanded');document.querySelectorAll('.card.expanded').forEach(c=>{c.classList.remove('expanded');c.querySelectorAll('.similar-list').forEach(s=>s.classList.remove('on'));});if(!was)card.classList.add('expanded');}
 function toggleSim(btn){const id=btn.dataset.id;const p=P.find(x=>x.id===id);if(!p)return;const el=document.getElementById('sim_'+id);if(el.classList.contains('on')){el.classList.remove('on');return;}const sim=findSimilar(p);el.querySelector('.sim-hdr b').textContent=`(${sim.length})`;const re=el.querySelector('.sim-rows');re.innerHTML=!sim.length?`<div class="sim-none">Похожих не найдено</div>`:sim.map(s=>`<div class="sim-row"><div class="sim-ico">${ico(s.service)}</div><div class="sim-body"><div class="sim-name">${esc(s.service)}</div><div class="sim-date">${fd(s.date)}</div></div><div class="sim-amt">₴ ${fa(s.amount)}</div></div>`).join('');el.classList.add('on');}
-function delFromPanel(btn){const id=btn.dataset.id;const card=btn.closest('.card');card.classList.add('rm');setTimeout(()=>{P=P.filter(x=>x.id!==id);persist();render();},230);}
+
+function delFromPanel(btn){const id=btn.dataset.id;const card=btn.closest('.card');card.classList.add('rm');setTimeout(async ()=>{P=P.filter(x=>x.id!==id);await persistData();render();},230);}
+
 function setMode(m,el){mode=m;document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('on'));el.classList.add('on');const nav=document.getElementById('monthNav');if(m==='month'){nav.classList.add('on');updateMonthLbl();}else nav.classList.remove('on');render();}
 function shiftMonth(dir){const[y,m]=curMonth.split('-').map(Number);const d=new Date(y,m-1+dir,1);curMonth=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;updateMonthLbl();render();}
 function updateMonthLbl(){const[y,m]=curMonth.split('-');document.getElementById('monthLbl').textContent=`${MO[parseInt(m)-1]} ${y}`;}
+
 document.getElementById('si').addEventListener('input',function(){document.getElementById('sx').classList.toggle('on',this.value.trim().length>0);render();});
 function clrS(){document.getElementById('si').value='';document.getElementById('sx').classList.remove('on');render();}
+
 let shOpen=false;
 function toggleSh(){shOpen?closeSh():openSh(false);}
 function openSh(isEdit){shOpen=true;document.getElementById('sh').classList.add('on');document.getElementById('ovl').classList.add('on');document.getElementById('fab').classList.add('open');document.getElementById('shTitle').textContent=isEdit?'Редактировать':'Новый платёж';if(!isEdit)setTimeout(()=>document.getElementById('fS').focus(),340);}
 function closeSh(){shOpen=false;document.getElementById('sh').classList.remove('on');document.getElementById('ovl').classList.remove('on');document.getElementById('fab').classList.remove('open');document.getElementById('editId').value='';document.getElementById('fS').value='';document.getElementById('fA').value='';document.getElementById('fD').value=new Date().toISOString().split('T')[0];document.getElementById('ff').value='';document.getElementById('ufn').textContent='';document.getElementById('uz').classList.remove('has');selFile='';}
 function startEdit(btn){const id=btn.dataset.id;const p=P.find(x=>x.id===id);if(!p)return;document.getElementById('editId').value=id;document.getElementById('fS').value=p.service;document.getElementById('fA').value=p.amount;document.getElementById('fD').value=p.date;if(p.filename){document.getElementById('ufn').textContent=p.filename;document.getElementById('uz').classList.add('has');selFile=p.filename;}openSh(true);}
 function onF(inp){const f=inp.files[0];if(!f){selFile='';return;}selFile=f.name;document.getElementById('ufn').textContent=f.name;document.getElementById('uz').classList.add('has');}
-function saveEntry(){const svc=document.getElementById('fS').value.trim();const amt=document.getElementById('fA').value;const dt=document.getElementById('fD').value;const eid=document.getElementById('editId').value;if(!svc){shake('fS');return;}if(!amt||isNaN(amt)||Number(amt)<=0){shake('fA');return;}if(!dt){shake('fD');return;}if(eid){const idx=P.findIndex(x=>x.id===eid);if(idx>-1)P[idx]={...P[idx],service:svc,amount:parseFloat(amt),date:dt,filename:selFile||P[idx].filename};}else{P.unshift({id:'n'+Date.now().toString(36),service:svc,amount:parseFloat(amt),date:dt,filename:selFile||''});}persist();closeSh();render();}
-function shake(id){const el=document.getElementById(id);el.style.borderColor='var(--red)';el.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:250});setTimeout(()=>el.style.borderColor='',800);el.focus();}
-function importX(inp){const f=inp.files[0];if(!f)return;document.getElementById('xfn').textContent='Загрузка…';loadXLSX().then(()=>{document.getElementById('xfn').textContent='Читаю…';const r=new FileReader();r.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1});let n=0;rows.slice(1).forEach(row=>{let d=row[0],ds='';if(d instanceof Date)ds=d.toISOString().split('T')[0];else if(typeof d==='string')ds=d.trim();else if(typeof d==='number'){const dt=new Date(Math.round((d-25569)*86400*1000));ds=dt.toISOString().split('T')[0];}if(!ds)return;const svc=String(row[1]||'').trim();if(!svc)return;const amt=parseFloat(String(row[2]||'0').replace(',','.'));const fn=String(row[3]||'').trim();const dup=P.some(x=>x.date===ds&&x.service===svc&&Number(x.amount)===amt);if(!dup){P.push({id:'x'+Date.now().toString(36)+Math.random().toString(36).slice(2),date:ds,service:svc,amount:amt,filename:fn});n++;}});persist();document.getElementById('xfn').textContent=`✓ Добавлено ${n} новых`;document.getElementById('xz').classList.add('has');closeSh();render();}catch(err){document.getElementById('xfn').textContent='Ошибка файла';}};r.readAsArrayBuffer(f);}).catch(()=>{document.getElementById('xfn').textContent='Нет интернета для загрузки библиотеки';});}
-function exportXlsx(){loadXLSX().then(()=>{const rows=filteredRows();const data=[['Дата','Сервис','Сумма','Имя файла'],...rows.map(r=>[r.date,r.service,r.amount,r.filename||''])];const ws=XLSX.utils.aoa_to_sheet(data);ws['!cols']=[{wch:12},{wch:36},{wch:12},{wch:42}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'payments');XLSX.writeFile(wb,`Payments${mode==='month'?'_'+curMonth:''}.xlsx`);}).catch(()=>alert('Нет интернета'));}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&shOpen)closeSh();});
-// Ждём полной загрузки DOM перед рендером
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded', render);
-} else {
+
+async function saveEntry(){
+  const svc=document.getElementById('fS').value.trim();
+  const amt=document.getElementById('fA').value;
+  const dt=document.getElementById('fD').value;
+  const eid=document.getElementById('editId').value;
+  if(!svc){shake('fS');return;}
+  if(!amt||isNaN(amt)||Number(amt)<=0){shake('fA');return;}
+  if(!dt){shake('fD');return;}
+  if(eid){
+    const idx=P.findIndex(x=>x.id===eid);
+    if(idx>-1)P[idx]={...P[idx],service:svc,amount:parseFloat(amt),date:dt,filename:selFile||P[idx].filename};
+  } else {
+    P.unshift({id:'n'+Date.now().toString(36),service:svc,amount:parseFloat(amt),date:dt,filename:selFile||''});
+  }
+  await persistData(); // ← СОХРАНЯЕМ СРАЗУ
+  closeSh();
   render();
 }
+
+function shake(id){const el=document.getElementById(id);el.style.borderColor='var(--red)';el.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:250});setTimeout(()=>el.style.borderColor='',800);el.focus();}
+
+function importX(inp){const f=inp.files[0];if(!f)return;document.getElementById('xfn').textContent='Загрузка…';loadXLSX().then(()=>{document.getElementById('xfn').textContent='Читаю…';const r=new FileReader();r.onload=async e=>{try{const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1});let n=0;rows.slice(1).forEach(row=>{let d=row[0],ds='';if(d instanceof Date)ds=d.toISOString().split('T')[0];else if(typeof d==='string')ds=d.trim();else if(typeof d==='number'){const dt=new Date(Math.round((d-25569)*86400*1000));ds=dt.toISOString().split('T')[0];}if(!ds)return;const svc=String(row[1]||'').trim();if(!svc)return;const amt=parseFloat(String(row[2]||'0').replace(',','.'));const fn=String(row[3]||'').trim();const dup=P.some(x=>x.date===ds&&x.service===svc&&Number(x.amount)===amt);if(!dup){P.push({id:'x'+Date.now().toString(36)+Math.random().toString(36).slice(2),date:ds,service:svc,amount:amt,filename:fn});n++;}});await persistData();document.getElementById('xfn').textContent=`✓ Добавлено ${n} новых`;document.getElementById('xz').classList.add('has');closeSh();render();}catch(err){document.getElementById('xfn').textContent='Ошибка файла';}};r.readAsArrayBuffer(f);}).catch(()=>{document.getElementById('xfn').textContent='Нет интернета';});}
+
+function exportXlsx(){loadXLSX().then(()=>{const rows=filteredRows();const data=[['Дата','Сервис','Сумма','Имя файла'],...rows.map(r=>[r.date,r.service,r.amount,r.filename||''])];const ws=XLSX.utils.aoa_to_sheet(data);ws['!cols']=[{wch:12},{wch:36},{wch:12},{wch:42}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'payments');XLSX.writeFile(wb,`Payments${mode==='month'?'_'+curMonth:''}.xlsx`);}).catch(()=>alert('Нет интернета'));}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&shOpen)closeSh();});
+
+// ── INIT ─────────────────────────────────────────────────────────
+loadData(); // загружаем из хранилища при старте
 </script>
 </body>
 </html>
